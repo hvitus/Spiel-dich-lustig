@@ -1,4 +1,4 @@
-package sds;
+package sdl;
 
 public class  Spielennnn{
  
