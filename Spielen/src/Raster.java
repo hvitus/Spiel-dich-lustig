@@ -65,7 +65,7 @@ public class Raster extends JPanel {
         }
 
         JPanel leftPanel = new JPanel(new GridBagLayout());
-        leftPanel.setPreferredSize(new Dimension(buttonSize, rasterSize + buttonSize));
+        leftPanel.setPreferredSize(new Dimension(buttonSize, rasterSize + buttonSize * 2));
         for (int i = 0; i < 7; i++) {
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridy = i;
