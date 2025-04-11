@@ -1,4 +1,4 @@
 
-public class spawnendeZahlen extends Raster{
+public class spawnendeZahlen extends SpielfeldMitRahmen{
 
 }
