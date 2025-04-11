@@ -13,7 +13,6 @@ class Panel {
         this.direction = direction;
     }
 
-    @Override
     public String toString() {
         return value;
     }
