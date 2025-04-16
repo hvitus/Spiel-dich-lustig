@@ -1,6 +1,12 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
+import java.awt.Point;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.LinkedList;
+
 
 public class SpielfeldMitRahmen {
     static final int SIZE = 7;
@@ -29,7 +35,6 @@ public class SpielfeldMitRahmen {
                     board[i][j] = new Panel("grid", " ", null);
                 }
 
-                // Nur wenn Panel vorhanden und vom Typ "border"
                 if (board[i][j] != null && board[i][j].typ.equals("border")) {
                     int finalI = i;
                     int finalJ = j;
@@ -51,10 +56,9 @@ public class SpielfeldMitRahmen {
                 if (board[i][j] != null) {
                     frame.add(board[i][j]);
                 } else {
-                    // Leere Ecken auch als Panels anzeigen, damit Gitter vollständig ist
                     JPanel leerPanel = new JPanel();
                     leerPanel.setBackground(Color.GRAY);
-                    leerPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK)); // <— Gitterlinie auch hier
+                    leerPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
                     frame.add(leerPanel);
                 }
             }
@@ -64,34 +68,167 @@ public class SpielfeldMitRahmen {
         frame.setVisible(true);
     }
 
-    
-
     public static void verschiebeZahl(int i, int j) {
         if (board[i][j] == null) return;
 
-        String wert = board[i][j].getText();
+        String wert = board[i][j].getText().strip();
+        if (wert.isEmpty()) return;
 
-        try {
-            if (i == 0 && isGrid(i + 1, j)) {
-                board[i + 1][j].setText(wert);
-            } else if (i == SIZE - 1 && isGrid(i - 1, j)) {
-                board[i - 1][j].setText(wert);
-            } else if (j == 0 && isGrid(i, j + 1)) {
-                board[i][j + 1].setText(wert);
-            } else if (j == SIZE - 1 && isGrid(i, j - 1)) {
-                board[i][j - 1].setText(wert);
+        boolean verschoben = false;
+
+        if (i == 0) {
+            List<String> werte = new ArrayList<>();
+            for (int k = 1; k < SIZE - 1; k++) {
+                String t = board[k][j].getText().strip();
+                if (!t.isEmpty()) werte.add(t);
             }
 
-            // Neue Zufallszahl ins Randfeld
-            board[i][j].setText(String.valueOf((int)(Math.random() * 3 + 1)));
+            if (werte.size() >= SIZE - 2) {
+                board[i][j].setBackground(Color.RED);
+                return;
+            }
 
-        } catch (Exception e) {
-            System.out.println("Fehler beim Verschieben: " + e.getMessage());
-            e.printStackTrace();
+            werte.add(0, wert);
+
+            for (int k = 1; k < SIZE - 1; k++) {
+                if (k - 1 < werte.size()) {
+                    board[k][j].setText(werte.get(k - 1));
+                } else {
+                    board[k][j].setText("");
+                }
+            }
+
+            verschoben = true;
+        } else if (i == SIZE - 1) {
+            List<String> werte = new ArrayList<>();
+            for (int k = SIZE - 2; k > 0; k--) {
+                String t = board[k][j].getText().strip();
+                if (!t.isEmpty()) werte.add(t);
+            }
+
+            if (werte.size() >= SIZE - 2) {
+                board[i][j].setBackground(Color.RED);
+                return;
+            }
+
+            werte.add(0, wert);
+
+            for (int k = SIZE - 2, idx = 0; k > 0; k--, idx++) {
+                if (idx < werte.size()) {
+                    board[k][j].setText(werte.get(idx));
+                } else {
+                    board[k][j].setText("");
+                }
+            }
+
+            verschoben = true;
+        } else if (j == 0) {
+            List<String> werte = new ArrayList<>();
+            for (int k = 1; k < SIZE - 1; k++) {
+                String t = board[i][k].getText().strip();
+                if (!t.isEmpty()) werte.add(t);
+            }
+
+            if (werte.size() >= SIZE - 2) {
+                board[i][j].setBackground(Color.RED);
+                return;
+            }
+
+            werte.add(0, wert);
+
+            for (int k = 1; k < SIZE - 1; k++) {
+                if (k - 1 < werte.size()) {
+                    board[i][k].setText(werte.get(k - 1));
+                } else {
+                    board[i][k].setText("");
+                }
+            }
+
+            verschoben = true;
+        } else if (j == SIZE - 1) {
+            List<String> werte = new ArrayList<>();
+            for (int k = SIZE - 2; k > 0; k--) {
+                String t = board[i][k].getText().strip();
+                if (!t.isEmpty()) werte.add(t);
+            }
+
+            if (werte.size() >= SIZE - 2) {
+                board[i][j].setBackground(Color.RED);
+                return;
+            }
+
+            werte.add(0, wert);
+
+            for (int k = SIZE - 2, idx = 0; k > 0; k--, idx++) {
+                if (idx < werte.size()) {
+                    board[i][k].setText(werte.get(idx));
+                } else {
+                    board[i][k].setText("");
+                }
+            }
+
+            verschoben = true;
+        }
+
+        if (verschoben) {
+            board[i][j].setText(String.valueOf((int)(Math.random() * 3 + 1)));
+            board[i][j].setBackground(Color.LIGHT_GRAY);
+            findeUndMergeGruppen();
         }
     }
 
-    public static boolean isGrid(int i, int j) {
-        return i > 0 && i < SIZE - 1 && j > 0 && j < SIZE - 1;
+    public static void findeUndMergeGruppen() {
+        boolean[][] besucht = new boolean[SIZE][SIZE];
+
+        for (int i = 1; i < SIZE - 1; i++) {
+            for (int j = 1; j < SIZE - 1; j++) {
+                if (!besucht[i][j]) {
+                    String wert = board[i][j].getText().strip();
+                    if (!wert.isEmpty()) {
+                        List<Point> gruppe = findeGruppe(i, j, wert, besucht);
+                        if (gruppe.size() >= 3) {
+                            int summe = gruppe.size() * Integer.parseInt(wert);
+                            Point p0 = gruppe.get(0);
+                            board[p0.x][p0.y].setText(String.valueOf(summe));
+                            for (int k = 1; k < gruppe.size(); k++) {
+                                Point p = gruppe.get(k);
+                                board[p.x][p.y].setText("");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static List<Point> findeGruppe(int i, int j, String wert, boolean[][] besucht) {
+        List<Point> gruppe = new ArrayList<>();
+        Queue<Point> queue = new LinkedList<>();
+        queue.add(new Point(i, j));
+        besucht[i][j] = true;
+
+        while (!queue.isEmpty()) {
+            Point p = queue.poll();
+            gruppe.add(p);
+
+            int[][] richtungen = {{0,1}, {1,0}, {0,-1}, {-1,0}};
+
+            for (int[] r : richtungen) {
+                int ni = p.x + r[0];
+                int nj = p.y + r[1];
+
+                if (ni > 0 && ni < SIZE - 1 && nj > 0 && nj < SIZE - 1) {
+                    if (!besucht[ni][nj]) {
+                        String nachbar = board[ni][nj].getText().strip();
+                        if (nachbar.equals(wert)) {
+                            besucht[ni][nj] = true;
+                            queue.add(new Point(ni, nj));
+                        }
+                    }
+                }
+            }
+        }
+
+        return gruppe;
     }
 }
