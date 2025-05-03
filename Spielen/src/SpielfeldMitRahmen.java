@@ -6,6 +6,8 @@ import java.io.*;
 import java.util.*;
 import java.awt.Point;
 import java.util.List;
+import javax.sound.sampled.*;
+
 
 
 public class SpielfeldMitRahmen {
@@ -17,12 +19,86 @@ public class SpielfeldMitRahmen {
     private static Timer delayTimer;
     static List<HighscoreEintrag> highscoreListe = new ArrayList<>();
     static final String DATEINAME = "highscores.txt";
+    
 
     public static void main(String[] args) {
         ladeHighscores();
-        initialisiereSpielfeld();
-        zeichneSpielfeld();
+        zeigeStartbildschirm();
     }
+    public static void zeigeStartbildschirm() {
+        frame.getContentPane().removeAll();
+        frame.setLayout(new BorderLayout());
+
+        JPanel startPanel = new JPanel();
+        startPanel.setLayout(new BoxLayout(startPanel, BoxLayout.Y_AXIS));
+        startPanel.setBackground(Color.BLACK);
+
+        JLabel titelLabel = new JLabel("Merge dich zesty", SwingConstants.CENTER);
+        titelLabel.setFont(new Font("Arial", Font.BOLD, 48));
+        titelLabel.setForeground(Color.BLUE);
+        titelLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        startPanel.add(Box.createVerticalStrut(80));
+        startPanel.add(titelLabel);
+
+        // Animation für die Schriftgröße
+        Timer timer = new Timer(50, new ActionListener() {
+            private int fontSize = 40;
+            private boolean growing = true;
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (growing) {
+                    fontSize += 2;
+                    if (fontSize >= 72) {
+                        growing = false;
+                    }
+                } else {
+                    fontSize -= 2;
+                    if (fontSize <= 48) {
+                        growing = true;
+                    }
+                }
+                titelLabel.setFont(new Font("Arial", Font.BOLD, fontSize));
+            }
+        });
+        timer.start();
+
+        JButton startButton = new JButton("Start");
+        startButton.setFont(new Font("Arial", Font.BOLD, 32));
+        startButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        startButton.setFocusPainted(false);
+        startButton.setBackground(new Color(50, 200, 50));
+        startButton.setForeground(Color.BLACK);
+
+        // Button Hover Effekt: Vergrößern beim Hover
+        startButton.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                startButton.setFont(new Font("Arial", Font.BOLD, 36));  // Vergrößern
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                startButton.setFont(new Font("Arial", Font.BOLD, 32));  // Zurücksetzen
+            }
+        });
+
+        startButton.addActionListener(e -> {
+            initialisiereSpielfeld();
+            zeichneSpielfeld();
+            spieleHintergrundmusik("background.wav");
+        });
+
+        startPanel.add(Box.createVerticalStrut(50));
+        startPanel.add(startButton);
+
+
+        frame.getContentPane().add(startPanel, BorderLayout.CENTER);
+        frame.setSize(700, 750);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
+    }
+
 
     public static void initialisiereSpielfeld() {
         for (int i = 0; i < SIZE; i++) {
@@ -170,6 +246,7 @@ public class SpielfeldMitRahmen {
                                         if (neueZahl > highscore) {
                                             highscore = neueZahl;
                                             highscoreLabel.setText("Highscore: " + highscore);
+                                            spieleHighscorePopAnimation(); // <- Animation hier aufrufen
                                         }
 
                                         etwasGemerged[0] = true;
@@ -331,11 +408,13 @@ public class SpielfeldMitRahmen {
             highscoreLabel.setText("Highscore: 1");
             initialisiereSpielfeld();
             zeichneSpielfeld();
+            spieleHintergrundmusik("background.wav");
         });
 
         overlay.add(Box.createVerticalStrut(20));
         overlay.add(restartButton);
         layeredPane.add(overlay, JLayeredPane.POPUP_LAYER);
+        spieleGameOverMusik("gameover.wav");
     }
 
     static class HighscoreEintrag {
@@ -345,6 +424,33 @@ public class SpielfeldMitRahmen {
             this.name = name;
             this.punkte = punkte;
         }
+    }
+    public static void spieleHighscorePopAnimation() {
+        Timer timer = new Timer(50, null);
+        final int[] schritt = {0};
+        final int[] groesse = {20};
+        final boolean[] wachsend = {true};
+
+        timer.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (wachsend[0]) {
+                    groesse[0] += 2;
+                    if (groesse[0] >= 32) wachsend[0] = false;
+                } else {
+                    groesse[0] -= 2;
+                    if (groesse[0] <= 20) {
+                        highscoreLabel.setFont(new Font("Arial", Font.BOLD, 20));
+                        timer.stop();
+                        return;
+                    }
+                }
+                highscoreLabel.setFont(new Font("Arial", Font.BOLD, groesse[0]));
+                frame.revalidate();
+                frame.repaint();
+            }
+        });
+
+        timer.start();
     }
 
     public static void speichereHighscores() {
@@ -375,4 +481,42 @@ public class SpielfeldMitRahmen {
             e.printStackTrace();
         }
     }
+    public static Clip hintergrundClip;
+    private static Clip gameOverClip;
+
+    public static void spieleHintergrundmusik(String dateipfad) {
+        stopMusik(); // Vorherige Musik stoppen
+        try {
+            AudioInputStream audioInput = AudioSystem.getAudioInputStream(new File(dateipfad));
+            hintergrundClip = AudioSystem.getClip();
+            hintergrundClip.open(audioInput);
+            hintergrundClip.loop(Clip.LOOP_CONTINUOUSLY); // Endlosschleife
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void spieleGameOverMusik(String dateipfad) {
+        stopMusik(); // Hintergrundmusik stoppen
+        try {
+            AudioInputStream audioInput = AudioSystem.getAudioInputStream(new File(dateipfad));
+            gameOverClip = AudioSystem.getClip();
+            gameOverClip.open(audioInput);
+            gameOverClip.start(); // Nur einmal abspielen
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void stopMusik() {
+        if (hintergrundClip != null && hintergrundClip.isRunning()) {
+            hintergrundClip.stop();
+            hintergrundClip.close();
+        }
+        if (gameOverClip != null && gameOverClip.isRunning()) {
+            gameOverClip.stop();
+            gameOverClip.close();
+        }
+    }
+
 }
