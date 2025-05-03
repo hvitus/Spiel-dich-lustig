@@ -16,7 +16,6 @@ public class SpielfeldMitRahmen {
     static JLabel highscoreLabel = new JLabel("Highscore: 1", SwingConstants.CENTER);
     private static Timer delayTimer;
 
-
     public static void main(String[] args) {
         initialisiereSpielfeld();
         zeichneSpielfeld();
@@ -29,7 +28,7 @@ public class SpielfeldMitRahmen {
                     board[i][j] = null;
                 } else if (i > 0 && i < SIZE - 1 && j > 0 && j < SIZE - 1) {
                     board[i][j] = new Panel("grid", " ", null);
-                    board[i][j].setBackground(Color.WHITE); // Hintergrund weiß setzen
+                    board[i][j].setBackground(Color.WHITE);
                 } else {
                     board[i][j] = new Panel("border", "", null);
                 }
@@ -60,7 +59,6 @@ public class SpielfeldMitRahmen {
             }
         }
     }
-
 
     public static void zeichneSpielfeld() {
         frame.getContentPane().removeAll();
@@ -136,10 +134,10 @@ public class SpielfeldMitRahmen {
     }
 
     public static void findeUndMergeGruppen() {
-        final boolean[] etwasGemerged = { false };  // Array mit einem Element = "veränderbare Variable"
-        
+        final boolean[] etwasGemerged = { false };
+
         boolean gefundenUndTimerGestartet;
-        
+
         do {
             gefundenUndTimerGestartet = false;
             boolean[][] besucht = new boolean[SIZE][SIZE];
@@ -171,14 +169,15 @@ public class SpielfeldMitRahmen {
                                             highscoreLabel.setText("Highscore: " + highscore);
                                         }
 
-                                        etwasGemerged[0] = true; // jetzt erlaubt!
+                                        etwasGemerged[0] = true;
                                         delayTimer.stop();
-                                        
-                                        // Optional: GUI neu zeichnen
-                                        frame.repaint();
 
-                                        // Erneut versuchen zu mergen nach Abschluss
-                                        SwingUtilities.invokeLater(() -> findeUndMergeGruppen());
+                                        frame.repaint();
+                                        SwingUtilities.invokeLater(() -> {
+                                            findeUndMergeGruppen();
+                                            setzeRandfarbenZurück(); // <–– Farben nach Merge prüfen
+                                            prüfeObSpielVorbei();     // <–– Spielende prüfen nach Merge
+                                        });
                                     }
                                 });
                                 delayTimer.setRepeats(false);
@@ -190,9 +189,6 @@ public class SpielfeldMitRahmen {
             }
         } while (gefundenUndTimerGestartet && etwasGemerged[0]);
     }
-
-
-
 
     public static List<Point> findeGruppe(int i, int j, String wert, boolean[][] besucht) {
         List<Point> gruppe = new ArrayList<>();
@@ -243,8 +239,12 @@ public class SpielfeldMitRahmen {
 
     public static String generiereRandZahl() {
         int max = ermittleMaximalwertImRaster();
-        int min = Math.max(1, max - 3);
-        int zahl = (int)(Math.random() * (max - min + 1)) + min;
+        int min = Math.max(1, max - 4);
+        int maxZahl = Math.max(1, max - 1);
+
+        if (min > maxZahl) min = maxZahl;
+
+        int zahl = (int)(Math.random() * (maxZahl - min + 1)) + min;
         return String.valueOf(zahl);
     }
 
@@ -280,6 +280,8 @@ public class SpielfeldMitRahmen {
 
                     if (kannSchieben(zi, zj, ri, rj)) {
                         board[i][j].setBackground(Color.LIGHT_GRAY);
+                    } else {
+                        board[i][j].setBackground(Color.RED);
                     }
                 }
             }
