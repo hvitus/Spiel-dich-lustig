@@ -119,28 +119,35 @@ public class SpielfeldMitRahmen {
 
 
     public static void findeUndMergeGruppen() {
-        boolean[][] besucht = new boolean[SIZE][SIZE];
+        boolean etwasGemerged;
 
-        for (int i = 1; i < SIZE - 1; i++) {
-            for (int j = 1; j < SIZE - 1; j++) {
-                if (!besucht[i][j]) {
-                    String wert = board[i][j].getText().strip();
-                    if (!wert.isEmpty()) {
-                        List<Point> gruppe = findeGruppe(i, j, wert, besucht);
-                        if (gruppe.size() >= 3) {
-                            int summe = gruppe.size() * Integer.parseInt(wert);
-                            Point p0 = gruppe.get(0);
-                            board[p0.x][p0.y].setText(String.valueOf(summe));
-                            for (int k = 1; k < gruppe.size(); k++) {
-                                Point p = gruppe.get(k);
-                                board[p.x][p.y].setText("");
+        do {
+            etwasGemerged = false;
+            boolean[][] besucht = new boolean[SIZE][SIZE];
+
+            for (int i = 1; i < SIZE - 1; i++) {
+                for (int j = 1; j < SIZE - 1; j++) {
+                    if (!besucht[i][j]) {
+                        String wert = board[i][j].getText().strip();
+                        if (!wert.isEmpty()) {
+                            List<Point> gruppe = findeGruppe(i, j, wert, besucht);
+                            if (gruppe.size() >= 3) {
+                                int neueZahl = Integer.parseInt(wert) + 1;
+                                Point p0 = gruppe.get(0);
+                                board[p0.x][p0.y].setText(String.valueOf(neueZahl));
+                                for (int k = 1; k < gruppe.size(); k++) {
+                                    Point p = gruppe.get(k);
+                                    board[p.x][p.y].setText("");
+                                }
+                                etwasGemerged = true;
                             }
                         }
                     }
                 }
             }
-        }
+        } while (etwasGemerged);
     }
+
 
     public static List<Point> findeGruppe(int i, int j, String wert, boolean[][] besucht) {
         List<Point> gruppe = new ArrayList<>();
