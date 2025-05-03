@@ -74,108 +74,49 @@ public class SpielfeldMitRahmen {
         String wert = board[i][j].getText().strip();
         if (wert.isEmpty()) return;
 
-        boolean verschoben = false;
+        int ri = 0, rj = 0;
 
-        if (i == 0) {
-            List<String> werte = new ArrayList<>();
-            for (int k = 1; k < SIZE - 1; k++) {
-                String t = board[k][j].getText().strip();
-                if (!t.isEmpty()) werte.add(t);
-            }
+        if (i == 0) { ri = 1; }                 // nach unten
+        else if (i == SIZE - 1) { ri = -1; }    // nach oben
+        else if (j == 0) { rj = 1; }            // nach rechts
+        else if (j == SIZE - 1) { rj = -1; }    // nach links
+        else return;
 
-            if (werte.size() >= SIZE - 2) {
-                board[i][j].setBackground(Color.RED);
-                return;
-            }
+        int zi = i + ri;
+        int zj = j + rj;
 
-            werte.add(0, wert);
-
-            for (int k = 1; k < SIZE - 1; k++) {
-                if (k - 1 < werte.size()) {
-                    board[k][j].setText(werte.get(k - 1));
-                } else {
-                    board[k][j].setText("");
-                }
-            }
-
-            verschoben = true;
-        } else if (i == SIZE - 1) {
-            List<String> werte = new ArrayList<>();
-            for (int k = SIZE - 2; k > 0; k--) {
-                String t = board[k][j].getText().strip();
-                if (!t.isEmpty()) werte.add(t);
-            }
-
-            if (werte.size() >= SIZE - 2) {
-                board[i][j].setBackground(Color.RED);
-                return;
-            }
-
-            werte.add(0, wert);
-
-            for (int k = SIZE - 2, idx = 0; k > 0; k--, idx++) {
-                if (idx < werte.size()) {
-                    board[k][j].setText(werte.get(idx));
-                } else {
-                    board[k][j].setText("");
-                }
-            }
-
-            verschoben = true;
-        } else if (j == 0) {
-            List<String> werte = new ArrayList<>();
-            for (int k = 1; k < SIZE - 1; k++) {
-                String t = board[i][k].getText().strip();
-                if (!t.isEmpty()) werte.add(t);
-            }
-
-            if (werte.size() >= SIZE - 2) {
-                board[i][j].setBackground(Color.RED);
-                return;
-            }
-
-            werte.add(0, wert);
-
-            for (int k = 1; k < SIZE - 1; k++) {
-                if (k - 1 < werte.size()) {
-                    board[i][k].setText(werte.get(k - 1));
-                } else {
-                    board[i][k].setText("");
-                }
-            }
-
-            verschoben = true;
-        } else if (j == SIZE - 1) {
-            List<String> werte = new ArrayList<>();
-            for (int k = SIZE - 2; k > 0; k--) {
-                String t = board[i][k].getText().strip();
-                if (!t.isEmpty()) werte.add(t);
-            }
-
-            if (werte.size() >= SIZE - 2) {
-                board[i][j].setBackground(Color.RED);
-                return;
-            }
-
-            werte.add(0, wert);
-
-            for (int k = SIZE - 2, idx = 0; k > 0; k--, idx++) {
-                if (idx < werte.size()) {
-                    board[i][k].setText(werte.get(idx));
-                } else {
-                    board[i][k].setText("");
-                }
-            }
-
-            verschoben = true;
-        }
-
-        if (verschoben) {
+        // Prüfe, ob wir Platz schaffen können
+        if (kannSchieben(zi, zj, ri, rj)) {
+            schiebeKette(zi, zj, ri, rj);
+            board[zi][zj].setText(wert);
             board[i][j].setText(String.valueOf((int)(Math.random() * 3 + 1)));
             board[i][j].setBackground(Color.LIGHT_GRAY);
             findeUndMergeGruppen();
+        } else {
+            board[i][j].setBackground(Color.RED);
         }
     }
+
+ // Prüft rekursiv, ob ein Feld leer ist oder frei gemacht werden kann
+    public static boolean kannSchieben(int i, int j, int ri, int rj) {
+        if (i <= 0 || i >= SIZE - 1 || j <= 0 || j >= SIZE - 1) return false;
+        if (board[i][j].getText().strip().isEmpty()) return true;
+
+        return kannSchieben(i + ri, j + rj, ri, rj);
+    }
+
+    // Verschiebt alle Zahlen in Richtung ri/rj um 1 Feld
+    public static void schiebeKette(int i, int j, int ri, int rj) {
+        if (board[i][j].getText().strip().isEmpty()) return;
+
+        int ni = i + ri;
+        int nj = j + rj;
+
+        schiebeKette(ni, nj, ri, rj); // erst weiter hinten Platz schaffen
+        board[ni][nj].setText(board[i][j].getText());
+        board[i][j].setText("");
+    }
+
 
     public static void findeUndMergeGruppen() {
         boolean[][] besucht = new boolean[SIZE][SIZE];
