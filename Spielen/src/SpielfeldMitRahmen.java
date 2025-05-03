@@ -1,6 +1,5 @@
 import javax.swing.*;
 import javax.swing.Timer;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -155,7 +154,6 @@ public class SpielfeldMitRahmen {
                                 int neueZahl = Integer.parseInt(wert) + 1;
 
                                 delayTimer = new Timer(250, new ActionListener() {
-                                    @Override
                                     public void actionPerformed(ActionEvent e) {
                                         Point p0 = gruppe.get(0);
                                         board[p0.x][p0.y].setText(String.valueOf(neueZahl));
