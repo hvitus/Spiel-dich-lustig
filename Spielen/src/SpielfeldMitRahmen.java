@@ -29,6 +29,7 @@ public class SpielfeldMitRahmen {
                     board[i][j] = null;
                 } else if (i > 0 && i < SIZE - 1 && j > 0 && j < SIZE - 1) {
                     board[i][j] = new Panel("grid", " ", null);
+                    board[i][j].setBackground(Color.WHITE); // Hintergrund weiß setzen
                 } else {
                     board[i][j] = new Panel("border", "", null);
                 }
@@ -59,6 +60,7 @@ public class SpielfeldMitRahmen {
             }
         }
     }
+
 
     public static void zeichneSpielfeld() {
         frame.getContentPane().removeAll();
@@ -153,7 +155,7 @@ public class SpielfeldMitRahmen {
 
                                 int neueZahl = Integer.parseInt(wert) + 1;
 
-                                delayTimer = new Timer(250, new ActionListener() {
+                                delayTimer = new Timer(200, new ActionListener() {
                                     public void actionPerformed(ActionEvent e) {
                                         Point p0 = gruppe.get(0);
                                         board[p0.x][p0.y].setText(String.valueOf(neueZahl));
