@@ -7,6 +7,7 @@ import java.awt.Point;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.stream.Collectors;
 
 public class SpielfeldMitRahmen {
     static final int SIZE = 7;
@@ -15,6 +16,8 @@ public class SpielfeldMitRahmen {
     static int highscore = 1;
     static JLabel highscoreLabel = new JLabel("Highscore: 1", SwingConstants.CENTER);
     private static Timer delayTimer;
+
+    static List<ScoreEntry> highscores = new ArrayList<>();
 
     public static void main(String[] args) {
         initialisiereSpielfeld();
@@ -175,8 +178,8 @@ public class SpielfeldMitRahmen {
                                         frame.repaint();
                                         SwingUtilities.invokeLater(() -> {
                                             findeUndMergeGruppen();
-                                            setzeRandfarbenZurück(); // <–– Farben nach Merge prüfen
-                                            prüfeObSpielVorbei();     // <–– Spielende prüfen nach Merge
+                                            setzeRandfarbenZurück();
+                                            prüfeObSpielVorbei();
                                         });
                                     }
                                 });
@@ -262,7 +265,14 @@ public class SpielfeldMitRahmen {
             }
         }
 
-        if (allesRot) zeigeGameOverOverlay();
+        if (allesRot) {
+            String name = JOptionPane.showInputDialog(frame, "Spiel vorbei! Bitte gib deinen Namen ein:");
+            if (name != null && !name.strip().isEmpty()) {
+                highscores.add(new ScoreEntry(name.strip(), highscore));
+                highscores.sort((a, b) -> Integer.compare(b.punkte, a.punkte));
+            }
+            zeigeGameOverOverlay();
+        }
     }
 
     public static void setzeRandfarbenZurück() {
@@ -314,6 +324,16 @@ public class SpielfeldMitRahmen {
         message.setForeground(Color.WHITE);
         message.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        JPanel scorePanel = new JPanel();
+        scorePanel.setOpaque(false);
+        scorePanel.setLayout(new BoxLayout(scorePanel, BoxLayout.Y_AXIS));
+        for (ScoreEntry entry : highscores) {
+            JLabel scoreLabel = new JLabel(entry.name + ": " + entry.punkte);
+            scoreLabel.setFont(new Font("Arial", Font.PLAIN, 18));
+            scoreLabel.setForeground(Color.WHITE);
+            scorePanel.add(scoreLabel);
+        }
+
         JButton restartButton = new JButton("Neustart");
         restartButton.setFont(new Font("Arial", Font.PLAIN, 24));
         restartButton.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -327,9 +347,21 @@ public class SpielfeldMitRahmen {
 
         inhalt.add(message);
         inhalt.add(Box.createRigidArea(new Dimension(0, 20)));
+        inhalt.add(scorePanel);
+        inhalt.add(Box.createRigidArea(new Dimension(0, 20)));
         inhalt.add(restartButton);
         blurOverlay.add(inhalt);
 
         layeredPane.add(blurOverlay, JLayeredPane.POPUP_LAYER);
+    }
+
+    static class ScoreEntry {
+        String name;
+        int punkte;
+
+        public ScoreEntry(String name, int punkte) {
+            this.name = name;
+            this.punkte = punkte;
+        }
     }
 }
