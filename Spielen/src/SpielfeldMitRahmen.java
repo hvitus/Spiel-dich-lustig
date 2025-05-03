@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.Timer;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
@@ -11,36 +13,21 @@ public class SpielfeldMitRahmen {
     static final int SIZE = 7;
     static Panel[][] board = new Panel[SIZE][SIZE];
     static JFrame frame = new JFrame("Spielfeld mit Rahmen");
-    static JLabel highscoreLabel = new JLabel("Highscore: 1", SwingConstants.CENTER);
     static int highscore = 1;
-    static JPanel overlay = new JPanel();
+    static JLabel highscoreLabel = new JLabel("Highscore: 1", SwingConstants.CENTER);
+    private static Timer delayTimer;
+
 
     public static void main(String[] args) {
-        frame.setLayout(new BorderLayout());
-        highscoreLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        frame.add(highscoreLabel, BorderLayout.NORTH);
-
-        JPanel spielfeldPanel = new JPanel(new GridLayout(SIZE, SIZE));
-        frame.add(spielfeldPanel, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel();
-        JButton restartBtn = new JButton("Restart");
-        restartBtn.addActionListener(e -> neustarten());
-        buttonPanel.add(restartBtn);
-        frame.add(buttonPanel, BorderLayout.SOUTH);
-
-        initialisiereSpielfeld(spielfeldPanel);
-        frame.setSize(800, 800);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
+        initialisiereSpielfeld();
+        zeichneSpielfeld();
     }
 
-    public static void initialisiereSpielfeld(JPanel panel) {
-        panel.removeAll();
+    public static void initialisiereSpielfeld() {
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
                 if ((i == 0 || i == SIZE - 1) && (j == 0 || j == SIZE - 1)) {
-                    board[i][j] = null; // Ecken leer
+                    board[i][j] = null;
                 } else if (i > 0 && i < SIZE - 1 && j > 0 && j < SIZE - 1) {
                     board[i][j] = new Panel("grid", " ", null);
                 } else {
@@ -49,7 +36,6 @@ public class SpielfeldMitRahmen {
             }
         }
 
-        // Initialisiere Border-Zellen
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
                 if (board[i][j] != null && board[i][j].typ.equals("border")) {
@@ -65,38 +51,52 @@ public class SpielfeldMitRahmen {
                     board[i][j].addMouseListener(new MouseAdapter() {
                         public void mouseClicked(MouseEvent e) {
                             verschiebeZahl(finalI, finalJ);
-                            updateRotStatus();
-                            checkGameOver();
+                            setzeRandfarbenZurück();
+                            prüfeObSpielVorbei();
                             frame.repaint();
                         }
                     });
                 }
             }
         }
-
-        for (int i = 0; i < SIZE; i++)
-            for (int j = 0; j < SIZE; j++)
-                panel.add(board[i][j] != null ? board[i][j] : leeresFeld());
-
-        panel.revalidate();
-        panel.repaint();
-        updateHighscore();
-        updateRotStatus();
     }
 
-    public static JPanel leeresFeld() {
-        JPanel leer = new JPanel();
-        leer.setBackground(Color.GRAY);
-        leer.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        return leer;
+    public static void zeichneSpielfeld() {
+        frame.getContentPane().removeAll();
+        frame.getContentPane().setLayout(new BorderLayout());
+
+        JPanel spielfeldPanel = new JPanel(new GridLayout(SIZE, SIZE));
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if (board[i][j] != null) {
+                    spielfeldPanel.add(board[i][j]);
+                } else {
+                    JPanel leerPanel = new JPanel();
+                    leerPanel.setBackground(Color.GRAY);
+                    leerPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+                    spielfeldPanel.add(leerPanel);
+                }
+            }
+        }
+
+        highscoreLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        highscoreLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        frame.getContentPane().add(highscoreLabel, BorderLayout.NORTH);
+        frame.getContentPane().add(spielfeldPanel, BorderLayout.CENTER);
+
+        frame.setSize(700, 750);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setVisible(true);
     }
 
     public static void verschiebeZahl(int i, int j) {
         if (board[i][j] == null) return;
+
         String wert = board[i][j].getText().strip();
         if (wert.isEmpty()) return;
 
         int ri = 0, rj = 0;
+
         if (i == 0) ri = 1;
         else if (i == SIZE - 1) ri = -1;
         else if (j == 0) rj = 1;
@@ -112,7 +112,6 @@ public class SpielfeldMitRahmen {
             board[i][j].setText(generiereRandZahl());
             board[i][j].setBackground(Color.LIGHT_GRAY);
             findeUndMergeGruppen();
-            updateHighscore();
         } else {
             board[i][j].setBackground(Color.RED);
         }
@@ -136,33 +135,64 @@ public class SpielfeldMitRahmen {
     }
 
     public static void findeUndMergeGruppen() {
-        boolean etwasGemerged;
+        final boolean[] etwasGemerged = { false };  // Array mit einem Element = "veränderbare Variable"
+        
+        boolean gefundenUndTimerGestartet;
+        
         do {
-            etwasGemerged = false;
+            gefundenUndTimerGestartet = false;
             boolean[][] besucht = new boolean[SIZE][SIZE];
 
-            for (int i = 1; i < SIZE - 1; i++) {
-                for (int j = 1; j < SIZE - 1; j++) {
+            for (int i = 1; i < SIZE - 1 && !gefundenUndTimerGestartet; i++) {
+                for (int j = 1; j < SIZE - 1 && !gefundenUndTimerGestartet; j++) {
                     if (!besucht[i][j]) {
                         String wert = board[i][j].getText().strip();
                         if (!wert.isEmpty()) {
                             List<Point> gruppe = findeGruppe(i, j, wert, besucht);
                             if (gruppe.size() >= 3) {
+                                gefundenUndTimerGestartet = true;
+
                                 int neueZahl = Integer.parseInt(wert) + 1;
-                                Point p0 = gruppe.get(0);
-                                board[p0.x][p0.y].setText(String.valueOf(neueZahl));
-                                for (int k = 1; k < gruppe.size(); k++) {
-                                    Point p = gruppe.get(k);
-                                    board[p.x][p.y].setText("");
-                                }
-                                etwasGemerged = true;
+
+                                delayTimer = new Timer(250, new ActionListener() {
+                                    @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                        Point p0 = gruppe.get(0);
+                                        board[p0.x][p0.y].setText(String.valueOf(neueZahl));
+                                        board[p0.x][p0.y].animateMerge();
+
+                                        for (int k = 1; k < gruppe.size(); k++) {
+                                            Point p = gruppe.get(k);
+                                            board[p.x][p.y].setText("");
+                                        }
+
+                                        if (neueZahl > highscore) {
+                                            highscore = neueZahl;
+                                            highscoreLabel.setText("Highscore: " + highscore);
+                                        }
+
+                                        etwasGemerged[0] = true; // jetzt erlaubt!
+                                        delayTimer.stop();
+                                        
+                                        // Optional: GUI neu zeichnen
+                                        frame.repaint();
+
+                                        // Erneut versuchen zu mergen nach Abschluss
+                                        SwingUtilities.invokeLater(() -> findeUndMergeGruppen());
+                                    }
+                                });
+                                delayTimer.setRepeats(false);
+                                delayTimer.start();
                             }
                         }
                     }
                 }
             }
-        } while (etwasGemerged);
+        } while (gefundenUndTimerGestartet && etwasGemerged[0]);
     }
+
+
+
 
     public static List<Point> findeGruppe(int i, int j, String wert, boolean[][] besucht) {
         List<Point> gruppe = new ArrayList<>();
@@ -173,10 +203,13 @@ public class SpielfeldMitRahmen {
         while (!queue.isEmpty()) {
             Point p = queue.poll();
             gruppe.add(p);
-            int[][] richtungen = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+
+            int[][] richtungen = {{0,1}, {1,0}, {0,-1}, {-1,0}};
+
             for (int[] r : richtungen) {
                 int ni = p.x + r[0];
                 int nj = p.y + r[1];
+
                 if (ni > 0 && ni < SIZE - 1 && nj > 0 && nj < SIZE - 1) {
                     if (!besucht[ni][nj]) {
                         String nachbar = board[ni][nj].getText().strip();
@@ -201,7 +234,7 @@ public class SpielfeldMitRahmen {
                     try {
                         int zahl = Integer.parseInt(wert);
                         if (zahl > max) max = zahl;
-                    } catch (NumberFormatException ignored) {}
+                    } catch (NumberFormatException e) {}
                 }
             }
         }
@@ -215,13 +248,24 @@ public class SpielfeldMitRahmen {
         return String.valueOf(zahl);
     }
 
-    public static void updateHighscore() {
-        int max = ermittleMaximalwertImRaster();
-        if (max > highscore) highscore = max;
-        highscoreLabel.setText("Highscore: " + highscore);
+    public static void prüfeObSpielVorbei() {
+        boolean allesRot = true;
+
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if (board[i][j] != null && board[i][j].typ.equals("border")) {
+                    if (!board[i][j].getBackground().equals(Color.RED)) {
+                        allesRot = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (allesRot) zeigeGameOverOverlay();
     }
 
-    public static void updateRotStatus() {
+    public static void setzeRandfarbenZurück() {
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
                 if (board[i][j] != null && board[i][j].typ.equals("border")) {
@@ -231,62 +275,59 @@ public class SpielfeldMitRahmen {
                     else if (j == 0) rj = 1;
                     else if (j == SIZE - 1) rj = -1;
 
-                    if (kannSchieben(i + ri, j + rj, ri, rj)) {
+                    int zi = i + ri;
+                    int zj = j + rj;
+
+                    if (kannSchieben(zi, zj, ri, rj)) {
                         board[i][j].setBackground(Color.LIGHT_GRAY);
-                    } else {
-                        board[i][j].setBackground(Color.RED);
                     }
                 }
             }
         }
     }
 
-    public static void checkGameOver() {
-        boolean alleRot = true;
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                if (board[i][j] != null && board[i][j].typ.equals("border") &&
-                    board[i][j].getBackground() != Color.RED) {
-                    alleRot = false;
-                    break;
-                }
-            }
-        }
-        if (alleRot) zeigeGameOverOverlay();
-    }
-
     public static void zeigeGameOverOverlay() {
-        overlay = new JPanel();
-        overlay.setLayout(new BorderLayout());
-        overlay.setBackground(new Color(0, 0, 0, 150));
-        JLabel text = new JLabel("Du bist gestorben", SwingConstants.CENTER);
-        text.setFont(new Font("Arial", Font.BOLD, 48));
-        text.setForeground(Color.WHITE);
-        overlay.add(text, BorderLayout.CENTER);
-        frame.setGlassPane(overlay);
-        overlay.setVisible(true);
-    }
+        JLayeredPane layeredPane = frame.getLayeredPane();
 
-    public static void neustarten() {
-        highscore = 1;
-        highscoreLabel.setText("Highscore: 1");
-        initialisiereSpielfeld((JPanel) frame.getContentPane().getComponent(1));
-        overlay.setVisible(false);
-    }
+        JPanel blurOverlay = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setColor(new Color(0, 0, 0, 150));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.dispose();
+            }
+        };
 
-    // Panel-Klasse (einfacher Button-Ersatz)
-    static class Panel extends JLabel {
-        String typ;
-        String richtung;
+        blurOverlay.setBounds(0, 0, frame.getWidth(), frame.getHeight());
+        blurOverlay.setLayout(new GridBagLayout());
 
-        public Panel(String typ, String text, String richtung) {
-            super(text, SwingConstants.CENTER);
-            this.typ = typ;
-            this.richtung = richtung;
-            setOpaque(true);
-            setBackground(Color.LIGHT_GRAY);
-            setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            setFont(new Font("Arial", Font.BOLD, 24));
-        }
+        JPanel inhalt = new JPanel();
+        inhalt.setLayout(new BoxLayout(inhalt, BoxLayout.Y_AXIS));
+        inhalt.setOpaque(false);
+
+        JLabel message = new JLabel("Du bist gestorben");
+        message.setFont(new Font("Arial", Font.BOLD, 40));
+        message.setForeground(Color.WHITE);
+        message.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JButton restartButton = new JButton("Neustart");
+        restartButton.setFont(new Font("Arial", Font.PLAIN, 24));
+        restartButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        restartButton.addActionListener(e -> {
+            frame.getLayeredPane().remove(blurOverlay);
+            frame.getLayeredPane().repaint();
+            frame.getContentPane().removeAll();
+            initialisiereSpielfeld();
+            zeichneSpielfeld();
+        });
+
+        inhalt.add(message);
+        inhalt.add(Box.createRigidArea(new Dimension(0, 20)));
+        inhalt.add(restartButton);
+        blurOverlay.add(inhalt);
+
+        layeredPane.add(blurOverlay, JLayeredPane.POPUP_LAYER);
     }
 }

@@ -1,35 +1,55 @@
 import javax.swing.*;
 import java.awt.*;
+import javax.swing.Timer; // Für den Timer
+import java.awt.event.ActionListener; // Für ActionListener
+import java.awt.event.ActionEvent; // Für ActionEvent
+import java.awt.Font; // Für Font
 
-public class Panel extends JPanel {
+
+class Panel extends JLabel {
     String typ;
-    String text;
     String richtung;
+    static Font normalFont = new Font("Arial", Font.PLAIN, 24);
+    static Font bigFont = new Font("Arial", Font.BOLD, 36);
+    Timer animationTimer;
 
     public Panel(String typ, String text, String richtung) {
+        super(text, SwingConstants.CENTER);
         this.typ = typ;
-        this.text = text;
         this.richtung = richtung;
-        this.setBackground(typ.equals("border") ? Color.LIGHT_GRAY : Color.WHITE);
-        this.setBorder(BorderFactory.createLineBorder(Color.BLACK)); // <— Gitterlinie
+        setOpaque(true);
+        setBackground(Color.LIGHT_GRAY);
+        setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        setFont(normalFont);
     }
 
-    public String getText() {
-        return this.text;
+    public void animateMerge() {
+        if (animationTimer != null && animationTimer.isRunning()) {
+            animationTimer.stop();
+        }
+
+        final int steps = 6;
+        final int delay = 20;
+        final int[] step = {0}; // Array trick für veränderbare Variable
+
+        animationTimer = new Timer(delay, null);
+        animationTimer.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                float scale = 1.0f + 0.1f * (step[0] < steps / 2 ? step[0] : steps - step[0]);
+                setFont(getScaledFont(scale));
+                step[0]++;
+                if (step[0] > steps) {
+                    setFont(normalFont);
+                    animationTimer.stop();
+                }
+            }
+        });
+        animationTimer.start();
     }
 
-    public void setText(String newText) {
-        this.text = newText;
-        repaint();
-    }
 
-    @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        g.setFont(new Font("Arial", Font.BOLD, 24));
-        FontMetrics fm = g.getFontMetrics();
-        int textWidth = fm.stringWidth(text);
-        int textHeight = fm.getAscent();
-        g.drawString(text, getWidth() / 2 - textWidth / 2, getHeight() / 2 + textHeight / 4);
+    private Font getScaledFont(float scale) {
+        return getFont().deriveFont(getFont().getSize2D() * scale);
     }
 }
