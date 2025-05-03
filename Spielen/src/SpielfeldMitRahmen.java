@@ -2,12 +2,11 @@ import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 import java.util.*;
 import java.awt.Point;
 import java.util.List;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.stream.Collectors;
+
 
 public class SpielfeldMitRahmen {
     static final int SIZE = 7;
@@ -16,10 +15,11 @@ public class SpielfeldMitRahmen {
     static int highscore = 1;
     static JLabel highscoreLabel = new JLabel("Highscore: 1", SwingConstants.CENTER);
     private static Timer delayTimer;
-
-    static List<ScoreEntry> highscores = new ArrayList<>();
+    static List<HighscoreEintrag> highscoreListe = new ArrayList<>();
+    static final String DATEINAME = "highscores.txt";
 
     public static void main(String[] args) {
+        ladeHighscores();
         initialisiereSpielfeld();
         zeichneSpielfeld();
     }
@@ -199,23 +199,20 @@ public class SpielfeldMitRahmen {
         queue.add(new Point(i, j));
         besucht[i][j] = true;
 
+        int[][] richtungen = {{0,1}, {1,0}, {0,-1}, {-1,0}};
+
         while (!queue.isEmpty()) {
             Point p = queue.poll();
             gruppe.add(p);
-
-            int[][] richtungen = {{0,1}, {1,0}, {0,-1}, {-1,0}};
 
             for (int[] r : richtungen) {
                 int ni = p.x + r[0];
                 int nj = p.y + r[1];
 
                 if (ni > 0 && ni < SIZE - 1 && nj > 0 && nj < SIZE - 1) {
-                    if (!besucht[ni][nj]) {
-                        String nachbar = board[ni][nj].getText().strip();
-                        if (nachbar.equals(wert)) {
-                            besucht[ni][nj] = true;
-                            queue.add(new Point(ni, nj));
-                        }
+                    if (!besucht[ni][nj] && board[ni][nj].getText().strip().equals(wert)) {
+                        besucht[ni][nj] = true;
+                        queue.add(new Point(ni, nj));
                     }
                 }
             }
@@ -244,9 +241,7 @@ public class SpielfeldMitRahmen {
         int max = ermittleMaximalwertImRaster();
         int min = Math.max(1, max - 4);
         int maxZahl = Math.max(1, max - 1);
-
         if (min > maxZahl) min = maxZahl;
-
         int zahl = (int)(Math.random() * (maxZahl - min + 1)) + min;
         return String.valueOf(zahl);
     }
@@ -265,14 +260,7 @@ public class SpielfeldMitRahmen {
             }
         }
 
-        if (allesRot) {
-            String name = JOptionPane.showInputDialog(frame, "Spiel vorbei! Bitte gib deinen Namen ein:");
-            if (name != null && !name.strip().isEmpty()) {
-                highscores.add(new ScoreEntry(name.strip(), highscore));
-                highscores.sort((a, b) -> Integer.compare(b.punkte, a.punkte));
-            }
-            zeigeGameOverOverlay();
-        }
+        if (allesRot) zeigeGameOverOverlay();
     }
 
     public static void setzeRandfarbenZurück() {
@@ -299,69 +287,92 @@ public class SpielfeldMitRahmen {
     }
 
     public static void zeigeGameOverOverlay() {
-        JLayeredPane layeredPane = frame.getLayeredPane();
+        String name = JOptionPane.showInputDialog(frame, "Spiel vorbei! Gib deinen Namen ein:");
+        if (name != null && !name.strip().isEmpty()) {
+            highscoreListe.add(new HighscoreEintrag(name.strip(), highscore));
+            highscoreListe.sort((a, b) -> b.punkte - a.punkte);
+            speichereHighscores();
+        }
 
-        JPanel blurOverlay = new JPanel() {
-            @Override
+        JLayeredPane layeredPane = frame.getLayeredPane();
+        JPanel overlay = new JPanel() {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setColor(new Color(0, 0, 0, 150));
-                g2.fillRect(0, 0, getWidth(), getHeight());
-                g2.dispose();
+                g.setColor(new Color(0, 0, 0, 150));
+                g.fillRect(0, 0, getWidth(), getHeight());
             }
         };
+        overlay.setBounds(0, 0, frame.getWidth(), frame.getHeight());
+        overlay.setLayout(new BoxLayout(overlay, BoxLayout.Y_AXIS));
 
-        blurOverlay.setBounds(0, 0, frame.getWidth(), frame.getHeight());
-        blurOverlay.setLayout(new GridBagLayout());
-
-        JPanel inhalt = new JPanel();
-        inhalt.setLayout(new BoxLayout(inhalt, BoxLayout.Y_AXIS));
-        inhalt.setOpaque(false);
-
-        JLabel message = new JLabel("Du bist gestorben");
+        JLabel message = new JLabel("Du bist gestorben", SwingConstants.CENTER);
         message.setFont(new Font("Arial", Font.BOLD, 40));
         message.setForeground(Color.WHITE);
         message.setAlignmentX(Component.CENTER_ALIGNMENT);
+        overlay.add(Box.createVerticalStrut(30));
+        overlay.add(message);
 
-        JPanel scorePanel = new JPanel();
-        scorePanel.setOpaque(false);
-        scorePanel.setLayout(new BoxLayout(scorePanel, BoxLayout.Y_AXIS));
-        for (ScoreEntry entry : highscores) {
-            JLabel scoreLabel = new JLabel(entry.name + ": " + entry.punkte);
-            scoreLabel.setFont(new Font("Arial", Font.PLAIN, 18));
+        for (HighscoreEintrag eintrag : highscoreListe) {
+            JLabel scoreLabel = new JLabel(eintrag.name + " - " + eintrag.punkte);
             scoreLabel.setForeground(Color.WHITE);
-            scorePanel.add(scoreLabel);
+            scoreLabel.setFont(new Font("Arial", Font.PLAIN, 20));
+            scoreLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            overlay.add(scoreLabel);
         }
 
         JButton restartButton = new JButton("Neustart");
         restartButton.setFont(new Font("Arial", Font.PLAIN, 24));
         restartButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         restartButton.addActionListener(e -> {
-            frame.getLayeredPane().remove(blurOverlay);
+            frame.getLayeredPane().remove(overlay);
             frame.getLayeredPane().repaint();
             frame.getContentPane().removeAll();
+            highscore = 1;
+            highscoreLabel.setText("Highscore: 1");
             initialisiereSpielfeld();
             zeichneSpielfeld();
         });
 
-        inhalt.add(message);
-        inhalt.add(Box.createRigidArea(new Dimension(0, 20)));
-        inhalt.add(scorePanel);
-        inhalt.add(Box.createRigidArea(new Dimension(0, 20)));
-        inhalt.add(restartButton);
-        blurOverlay.add(inhalt);
-
-        layeredPane.add(blurOverlay, JLayeredPane.POPUP_LAYER);
+        overlay.add(Box.createVerticalStrut(20));
+        overlay.add(restartButton);
+        layeredPane.add(overlay, JLayeredPane.POPUP_LAYER);
     }
 
-    static class ScoreEntry {
+    static class HighscoreEintrag {
         String name;
         int punkte;
-
-        public ScoreEntry(String name, int punkte) {
+        HighscoreEintrag(String name, int punkte) {
             this.name = name;
             this.punkte = punkte;
+        }
+    }
+
+    public static void speichereHighscores() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(DATEINAME))) {
+            for (HighscoreEintrag e : highscoreListe) {
+                writer.println(e.name + ";" + e.punkte);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void ladeHighscores() {
+        File file = new File(DATEINAME);
+        if (!file.exists()) return;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String zeile;
+            while ((zeile = reader.readLine()) != null) {
+                String[] parts = zeile.split(";");
+                if (parts.length == 2) {
+                    String name = parts[0];
+                    int punkte = Integer.parseInt(parts[1]);
+                    highscoreListe.add(new HighscoreEintrag(name, punkte));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
