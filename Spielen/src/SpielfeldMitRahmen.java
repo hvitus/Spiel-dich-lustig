@@ -8,8 +8,6 @@ import java.awt.Point;
 import java.util.List;
 import javax.sound.sampled.*;
 
-
-
 public class SpielfeldMitRahmen {
     static final int SIZE = 7;
     static Panel[][] board = new Panel[SIZE][SIZE];
@@ -21,10 +19,6 @@ public class SpielfeldMitRahmen {
     static final String DATEINAME = "highscores.txt";
     
 
-    public static void main(String[] args) {
-        ladeHighscores();
-        zeigeStartbildschirm();
-    }
     public static void zeigeStartbildschirm() {
         frame.getContentPane().removeAll();
         frame.setLayout(new BorderLayout());

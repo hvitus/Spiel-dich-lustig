@@ -1,5 +1,6 @@
-public class SpielStart {
-    public static void main(String[] args) {
-        SpielfeldMitRahmen.main(args);
+class SpielStart extends SpielfeldMitRahmen{
+	public static void main(String[] args) {
+        ladeHighscores();
+        zeigeStartbildschirm();
     }
 }
