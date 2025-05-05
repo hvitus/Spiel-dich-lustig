@@ -416,26 +416,30 @@ public class SpielfeldMitRahmen {
     }
 
     public static void spieleGameOverMusik(String dateipfad) {
-        stopMusik(); // Hintergrundmusik stoppen
-        try {
-            AudioInputStream audioInput = AudioSystem.getAudioInputStream(new File(dateipfad));
-            gameOverClip = AudioSystem.getClip();
-            gameOverClip.open(audioInput);
-            gameOverClip.start(); // Nur einmal abspielen
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void stopMusik() {
+    try {
         if (hintergrundClip != null && hintergrundClip.isRunning()) {
             hintergrundClip.stop();
-            hintergrundClip.close();
         }
-        if (gameOverClip != null && gameOverClip.isRunning()) {
-            gameOverClip.stop();
-            gameOverClip.close();
-        }
+
+        AudioInputStream audioInput = AudioSystem.getAudioInputStream(new File(dateipfad));
+        gameOverClip = AudioSystem.getClip();
+        gameOverClip.open(audioInput);
+        gameOverClip.start(); // einmalig abspielen
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+}
+
+    public static void stopMusik() {
+    if (hintergrundClip != null && hintergrundClip.isRunning()) {
+        hintergrundClip.stop();
+        hintergrundClip.close();
+    }
+    if (gameOverClip != null && gameOverClip.isRunning()) {
+        gameOverClip.stop();
+        gameOverClip.close();
+    }
+}
+
 
 }
