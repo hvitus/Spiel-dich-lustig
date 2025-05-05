@@ -235,7 +235,7 @@ public class SpielfeldMitRahmen {
 
     public static String generiereRandZahl() {
         int max = ermittleMaximalwertImRaster();
-        int min = Math.max(1, max - 4);
+        int min = Math.max(1, max - 3);
         int maxZahl = Math.max(1, max - 1);
         if (min > maxZahl) min = maxZahl;
         int zahl = (int)(Math.random() * (maxZahl - min + 1)) + min;
