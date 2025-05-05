@@ -1,6 +1,6 @@
-class SpielStart extends SpielfeldMitRahmen{
+class SpielStart extends Startbildschirm{
 	public static void main(String[] args) {
         ladeHighscores();
-        zeigeStartbildschirm();
+        Startbildschirm();
     }
 }
