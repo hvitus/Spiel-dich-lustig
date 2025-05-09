@@ -8,7 +8,7 @@ import java.awt.Point;
 import java.util.List;
 import javax.sound.sampled.*;
 
-public class SpielfeldMitRahmen {
+public class Spiellogik{
     static final int SIZE = 7;
     static Panel[][] board = new Panel[SIZE][SIZE];
     static JFrame frame = new JFrame("Spielfeld mit Rahmen");
@@ -17,6 +17,8 @@ public class SpielfeldMitRahmen {
     private static Timer delayTimer;
     static List<HighscoreEintrag> highscoreListe = new ArrayList<>();
     static final String DATEINAME = "highscores.txt";
+    Color dunkelgrün = new Color(45, 115, 20); 
+
 
     public static void initialisiereSpielfeld() {
         for (int i = 0; i < SIZE; i++) {
@@ -205,7 +207,7 @@ public class SpielfeldMitRahmen {
             int max = highscore - 1;
             return (int) (Math.random() * (max - min + 1)) + min;
         } else {
-            return (int) (Math.random() * 3) + 1;
+            return (int) (Math.random() * 2) + 1;
         }
     }
 
@@ -215,8 +217,7 @@ public class SpielfeldMitRahmen {
         if (text.equals("1")) {
             p.setForeground(Color.BLUE); // <- explizit für intrinsischen Wert 1
         } else if (text.matches("[01]+")) { 
-            p.setForeground(Color.GREEN); // Binär
-        } else {
+        	p.setForeground(new Color(45, 115, 20));} else {
             p.setForeground(Color.BLUE); // Dezimal
         }
     }

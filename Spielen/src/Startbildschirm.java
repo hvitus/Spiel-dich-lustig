@@ -16,7 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import javax.swing.Timer;
 
-public class Startbildschirm  extends SpielfeldMitRahmen{
+public class Startbildschirm  extends Spiellogik{
   
 	public static void Startbildschirm() {
         frame.getContentPane().removeAll();
