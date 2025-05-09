@@ -52,4 +52,21 @@ class Panel extends JLabel {
     private Font getScaledFont(float scale) {
         return getFont().deriveFont(getFont().getSize2D() * scale);
     }
+    
+    public int getValue() {
+        String text = getText().strip();
+        if (text.isEmpty()) return -1;
+
+        try {
+            if (text.matches("[01]+")) { // Binär
+                return Integer.parseInt(text, 2);
+            } else {
+                return Integer.parseInt(text);
+            }
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
 }
+
+

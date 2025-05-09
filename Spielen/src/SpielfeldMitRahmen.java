@@ -17,7 +17,6 @@ public class SpielfeldMitRahmen {
     private static Timer delayTimer;
     static List<HighscoreEintrag> highscoreListe = new ArrayList<>();
     static final String DATEINAME = "highscores.txt";
-    
 
     public static void initialisiereSpielfeld() {
         for (int i = 0; i < SIZE; i++) {
@@ -41,7 +40,10 @@ public class SpielfeldMitRahmen {
                     else if (j == 0) board[i][j].richtung = "links";
                     else if (j == SIZE - 1) board[i][j].richtung = "rechts";
 
-                    board[i][j].setText(generiereRandZahl());
+                    board[i][j].setText(erstelleZahlAlsText(generiereRandWert()));
+
+                    // Farbanpassung nach Format
+                    setzeTextfarbe(board[i][j]);
 
                     int finalI = i;
                     int finalJ = j;
@@ -106,7 +108,9 @@ public class SpielfeldMitRahmen {
         if (kannSchieben(zi, zj, ri, rj)) {
             schiebeKette(zi, zj, ri, rj);
             board[zi][zj].setText(wert);
-            board[i][j].setText(generiereRandZahl());
+            setzeTextfarbe(board[zi][zj]); // <- hinzugefügt
+            board[i][j].setText(erstelleZahlAlsText(generiereRandWert()));
+            setzeTextfarbe(board[i][j]); // <- hinzugefügt
             board[i][j].setBackground(Color.LIGHT_GRAY);
             findeUndMergeGruppen();
         } else {
@@ -128,6 +132,7 @@ public class SpielfeldMitRahmen {
 
         schiebeKette(ni, nj, ri, rj);
         board[ni][nj].setText(board[i][j].getText());
+        setzeTextfarbe(board[ni][nj]); // <- hinzugefügt
         board[i][j].setText("");
     }
 
@@ -149,12 +154,13 @@ public class SpielfeldMitRahmen {
                             if (gruppe.size() >= 3) {
                                 gefundenUndTimerGestartet = true;
 
-                                int neueZahl = Integer.parseInt(wert) + 1;
+                                int neueZahl = board[i][j].getValue() + 1;
 
                                 delayTimer = new Timer(200, new ActionListener() {
                                     public void actionPerformed(ActionEvent e) {
                                         Point p0 = gruppe.get(0);
-                                        board[p0.x][p0.y].setText(String.valueOf(neueZahl));
+                                        board[p0.x][p0.y].setText(erstelleZahlAlsText(neueZahl));
+                                        setzeTextfarbe(board[p0.x][p0.y]); // <- hinzugefügt
                                         board[p0.x][p0.y].animateMerge();
 
                                         for (int k = 1; k < gruppe.size(); k++) {
@@ -165,7 +171,7 @@ public class SpielfeldMitRahmen {
                                         if (neueZahl > highscore) {
                                             highscore = neueZahl;
                                             highscoreLabel.setText("Highscore: " + highscore);
-                                            spieleHighscorePopAnimation(); // <- Animation hier aufrufen
+                                            spieleHighscorePopAnimation();
                                         }
 
                                         etwasGemerged[0] = true;
@@ -189,24 +195,46 @@ public class SpielfeldMitRahmen {
         } while (gefundenUndTimerGestartet && etwasGemerged[0]);
     }
 
+    public static String erstelleZahlAlsText(int wert) {
+        return Math.random() < 0.5 ? Integer.toBinaryString(wert) : String.valueOf(wert);
+    }
+
+    public static int generiereRandWert() {
+        return (int) (Math.random() * 3 + 1); // Werte von 1 bis 3
+    }
+
+    // Neue Methode zur Farbsetzung je nach Format
+    public static void setzeTextfarbe(Panel p) {
+        String text = p.getText().strip();
+        if (text.equals("1")) {
+            p.setForeground(Color.BLUE); // <- explizit für intrinsischen Wert 1
+        } else if (text.matches("[01]+")) { 
+            p.setForeground(Color.GREEN); // Binär
+        } else {
+            p.setForeground(Color.BLUE); // Dezimal
+        }
+    }
+
     public static List<Point> findeGruppe(int i, int j, String wert, boolean[][] besucht) {
         List<Point> gruppe = new ArrayList<>();
+        int zielWert = board[i][j].getValue(); // Wandelt Binär oder Dezimal nach int
+
         Queue<Point> queue = new LinkedList<>();
         queue.add(new Point(i, j));
         besucht[i][j] = true;
 
-        int[][] richtungen = {{0,1}, {1,0}, {0,-1}, {-1,0}};
-
         while (!queue.isEmpty()) {
-            Point p = queue.poll();
+            Point p = queue.remove();
             gruppe.add(p);
 
-            for (int[] r : richtungen) {
-                int ni = p.x + r[0];
-                int nj = p.y + r[1];
+            for (int[] dir : new int[][]{{1,0}, {-1,0}, {0,1}, {0,-1}}) {
+                int ni = p.x + dir[0];
+                int nj = p.y + dir[1];
 
-                if (ni > 0 && ni < SIZE - 1 && nj > 0 && nj < SIZE - 1) {
-                    if (!besucht[ni][nj] && board[ni][nj].getText().strip().equals(wert)) {
+                if (ni > 0 && ni < SIZE - 1 && nj > 0 && nj < SIZE - 1 && !besucht[ni][nj]) {
+                    if (!board[ni][nj].getText().strip().isEmpty() &&
+                        board[ni][nj].getValue() == zielWert) {
+
                         besucht[ni][nj] = true;
                         queue.add(new Point(ni, nj));
                     }
@@ -231,15 +259,6 @@ public class SpielfeldMitRahmen {
             }
         }
         return max;
-    }
-
-    public static String generiereRandZahl() {
-        int max = ermittleMaximalwertImRaster();
-        int min = Math.max(1, max - 3);
-        int maxZahl = Math.max(1, max - 1);
-        if (min > maxZahl) min = maxZahl;
-        int zahl = (int)(Math.random() * (maxZahl - min + 1)) + min;
-        return String.valueOf(zahl);
     }
 
     public static void prüfeObSpielVorbei() {
