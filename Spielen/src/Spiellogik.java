@@ -202,7 +202,7 @@ public class Spiellogik{
     }
 
     public static int generiereRandWert() {
-    	if (highscore >= 5) {
+    	if (highscore >= 4) {
             int min = Math.max(1, highscore - 4);
             int max = highscore - 1;
             return (int) (Math.random() * (max - min + 1)) + min;
@@ -217,7 +217,7 @@ public class Spiellogik{
         if (text.equals("1")) {
             p.setForeground(Color.BLUE); // <- explizit für intrinsischen Wert 1
         } else if (text.matches("[01]+")) { 
-        	p.setForeground(new Color(45, 115, 20));} else {
+        	p.setForeground(new Color(74, 171, 39));} else {
             p.setForeground(Color.BLUE); // Dezimal
         }
     }
