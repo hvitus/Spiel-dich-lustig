@@ -200,7 +200,13 @@ public class SpielfeldMitRahmen {
     }
 
     public static int generiereRandWert() {
-        return (int) (Math.random() * 3 + 1); // Werte von 1 bis 3
+    	if (highscore >= 5) {
+            int min = Math.max(1, highscore - 4);
+            int max = highscore - 1;
+            return (int) (Math.random() * (max - min + 1)) + min;
+        } else {
+            return (int) (Math.random() * 3) + 1;
+        }
     }
 
     // Neue Methode zur Farbsetzung je nach Format
@@ -245,21 +251,7 @@ public class SpielfeldMitRahmen {
         return gruppe;
     }
 
-    public static int ermittleMaximalwertImRaster() {
-        int max = 1;
-        for (int i = 1; i < SIZE - 1; i++) {
-            for (int j = 1; j < SIZE - 1; j++) {
-                String wert = board[i][j].getText().strip();
-                if (!wert.isEmpty()) {
-                    try {
-                        int zahl = Integer.parseInt(wert);
-                        if (zahl > max) max = zahl;
-                    } catch (NumberFormatException e) {}
-                }
-            }
-        }
-        return max;
-    }
+
 
     public static void prüfeObSpielVorbei() {
         boolean allesRot = true;
@@ -365,7 +357,6 @@ public class SpielfeldMitRahmen {
     }
     public static void spieleHighscorePopAnimation() {
         Timer timer = new Timer(50, null);
-        final int[] schritt = {0};
         final int[] groesse = {20};
         final boolean[] wachsend = {true};
 
@@ -377,14 +368,11 @@ public class SpielfeldMitRahmen {
                 } else {
                     groesse[0] -= 2;
                     if (groesse[0] <= 20) {
-                        highscoreLabel.setFont(new Font("Arial", Font.BOLD, 20));
                         timer.stop();
-                        return;
+                        groesse[0] = 20;
                     }
                 }
                 highscoreLabel.setFont(new Font("Arial", Font.BOLD, groesse[0]));
-                frame.revalidate();
-                frame.repaint();
             }
         });
 
