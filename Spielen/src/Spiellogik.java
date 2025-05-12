@@ -203,7 +203,7 @@ public class Spiellogik{
 
     public static int generiereRandWert() {
     	if (highscore >= 4) {
-            int min = Math.max(1, highscore - 4);
+            int min = Math.max(1, highscore - 3);
             int max = highscore - 1;
             return (int) (Math.random() * (max - min + 1)) + min;
         } else {
