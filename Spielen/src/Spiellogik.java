@@ -9,7 +9,7 @@ import java.util.List;
 import javax.sound.sampled.*;
 
 public class Spiellogik{
-    static final int SIZE = 7;
+    static final int SIZE = 7;//defienert Größe 7 als SIZE
     static Panel[][] board = new Panel[SIZE][SIZE];
     static JFrame frame = new JFrame("Spielfeld mit Rahmen");
     static int highscore = 1;
