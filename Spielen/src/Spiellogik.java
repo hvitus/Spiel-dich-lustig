@@ -16,8 +16,9 @@ public class Spiellogik{
     static JLabel highscoreLabel = new JLabel("Highscore: 1", SwingConstants.CENTER);
     private static Timer delayTimer;
     static List<HighscoreEintrag> highscoreListe = new ArrayList<>();
-    static final String DATEINAME = "highscores.txt";
-    Color dunkelgrün = new Color(45, 115, 20); 
+    static final String DATEINAME = "highscores.txt"; 
+    public static boolean binärModus = true;
+
 
 
    
@@ -116,7 +117,7 @@ public class Spiellogik{
             setzeTextfarbe(board[i][j]); 
             board[i][j].setBackground(Color.LIGHT_GRAY);
             findeUndMergeGruppen();
-        } else {
+        } else {// setzt Randfelder auf Rot, falls nicht geschoben werden kann
             board[i][j].setBackground(Color.RED);
         }
     }
@@ -139,7 +140,7 @@ public class Spiellogik{
         board[i][j].setText("");
     }
 
-    public static void findeUndMergeGruppen() { //schaut nach gleichen Zahlen im Feld und fügt sie zusammen, falls 3 orthogonal verbunden sind. 
+    public static void findeUndMergeGruppen() { //schaut nach gleichen Zahlen im Feld und fügt sie nach einer kurzen Verzögerungzusammen, falls 3 orthogonal verbunden sind. 
         final boolean[] etwasGemerged = { false };
 
         boolean gefundenUndTimerGestartet;
@@ -163,7 +164,7 @@ public class Spiellogik{
                                     public void actionPerformed(ActionEvent e) {
                                         Point p0 = gruppe.get(0);
                                         board[p0.x][p0.y].setText(erstelleZahlAlsText(neueZahl));
-                                        setzeTextfarbe(board[p0.x][p0.y]); // <- hinzugefügt
+                                        setzeTextfarbe(board[p0.x][p0.y]); 
                                         board[p0.x][p0.y].animateMerge();
 
                                         for (int k = 1; k < gruppe.size(); k++) {
@@ -171,7 +172,7 @@ public class Spiellogik{
                                             board[p.x][p.y].setText("");
                                         }
 
-                                        if (neueZahl > highscore) {
+                                        if (neueZahl > highscore) {// wenn eine neue Zahl ensteht,wird sie als Highscore genutzt. Hat auch Sinn für die generierung der Randzahlen.
                                             highscore = neueZahl;
                                             highscoreLabel.setText("Highscore: " + highscore);
                                             spieleHighscorePopAnimation();
@@ -180,7 +181,7 @@ public class Spiellogik{
                                         etwasGemerged[0] = true;
                                         delayTimer.stop();
 
-                                        frame.repaint();
+                                        frame.repaint();// schaut ob nach jedem merge ob das Spiel vorbei ist, Randfelder wieder weiß werden müssen und ob neue merge Möglichkeiten entstehen.
                                         SwingUtilities.invokeLater(() -> {
                                             findeUndMergeGruppen();
                                             setzeRandfarbenZurück();
@@ -199,10 +200,13 @@ public class Spiellogik{
     }
 
     public static String erstelleZahlAlsText(int wert) { //wandelt 50% der Zahlen in Binär um und gibt ihnen die variable "wert" als value
-        return Math.random() < 0.5 ? Integer.toBinaryString(wert) : String.valueOf(wert);
-    }
+    	 if (!binärModus) {//fragt nach ob mit Binär gespielt wird oder ohne
+    	        return String.valueOf(wert); // Nur Dezimal
+    	    }
+    	    return Math.random() < 0.5 ? Integer.toBinaryString(wert) : String.valueOf(wert); // Binär oder Dezimal
+    	}
 
-    public static int generiereRandWert() { //generiert die neuen Randzahlen, in Abhängigkeit von der höchsten Zahl (Highscore) im Spielfeld
+    public static int generiereRandWert() { //generiert die neuen Randzahlen, in Abhängigkeit von der höchsten Zahl (Highscore) im Spielfeld. Benutzt den Highscorewert.
     	if (highscore >= 4) {
             int min = Math.max(1, highscore - 3);
             int max = highscore - 1;
@@ -269,7 +273,7 @@ public class Spiellogik{
             }
         }
 
-        if (allesRot) zeigeGameOverOverlay();
+        if (allesRot) zeigeGameOverOverlay();// zeigt das Gameover Bild
     }
 
     public static void setzeRandfarbenZurück() {//prüft ob die Reiehen wieder frei sind, und enfernt das Rot von den Randfeldern
@@ -314,14 +318,14 @@ public class Spiellogik{
         overlay.setBounds(0, 0, frame.getWidth(), frame.getHeight());
         overlay.setLayout(new BoxLayout(overlay, BoxLayout.Y_AXIS));
 
-        JLabel message = new JLabel("Du bist gestorben", SwingConstants.CENTER);
+        JLabel message = new JLabel("Du bist gestorben", SwingConstants.CENTER);// Du bist gestorben Schrift
         message.setFont(new Font("Arial", Font.BOLD, 40));
         message.setForeground(Color.WHITE);
         message.setAlignmentX(Component.CENTER_ALIGNMENT);
         overlay.add(Box.createVerticalStrut(30));
         overlay.add(message);
 
-        for (HighscoreEintrag eintrag : highscoreListe) {
+        for (HighscoreEintrag eintrag : highscoreListe) {// zeigt die Highscore Liste, sotiert von hoch nach tief
             JLabel scoreLabel = new JLabel(eintrag.name + " - " + eintrag.punkte);
             scoreLabel.setForeground(Color.WHITE);
             scoreLabel.setFont(new Font("Arial", Font.PLAIN, 20));
@@ -329,7 +333,7 @@ public class Spiellogik{
             overlay.add(scoreLabel);
         }
 
-        JButton restartButton = new JButton("Neustart");
+        JButton restartButton = new JButton("Neustart");// Neustart Button
         restartButton.setFont(new Font("Arial", Font.PLAIN, 24));
         restartButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         restartButton.addActionListener(e -> {
@@ -340,7 +344,7 @@ public class Spiellogik{
             highscoreLabel.setText("Highscore: 1");
             initialisiereSpielfeld();
             zeichneSpielfeld();
-            spieleHintergrundmusik("background.wav");
+            spieleHintergrundmusik("background.wav");// spielt wieder Hintergrundmusik
         });
 
         overlay.add(Box.createVerticalStrut(20));
@@ -349,7 +353,7 @@ public class Spiellogik{
         spieleGameOverMusik("gameover.wav");
     }
 
-    static class HighscoreEintrag {//Speichert für jeden SPieler seinen Namen und deren Highscore
+    static class HighscoreEintrag {//Speichert für jeden Spieler seinen Namen und deren Highscore
         String name;
         int punkte;
         HighscoreEintrag(String name, int punkte) {
@@ -450,6 +454,7 @@ public class Spiellogik{
         gameOverClip.close();
     }
 }
+   
 
 
 }

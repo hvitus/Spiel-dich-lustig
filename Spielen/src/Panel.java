@@ -6,7 +6,7 @@ import java.awt.event.ActionEvent; // Für ActionEvent
 import java.awt.Font; // Für Font
 
 
-class Panel extends JLabel {
+class Panel extends JLabel {//Klasse Panel als Graphische Komponente, welche von initialisiere Spielfeld benutzt wird
     String typ;
     String richtung;
     static Font normalFont = new Font("Arial", Font.PLAIN, 24);
@@ -23,18 +23,17 @@ class Panel extends JLabel {
         setFont(normalFont);
     }
 
-    public void animateMerge() {
+    public void animateMerge() {//Merge Animation
         if (animationTimer != null && animationTimer.isRunning()) {
             animationTimer.stop();
         }
 
         final int steps = 6;
         final int delay = 20;
-        final int[] step = {0}; // Array trick für veränderbare Variable
+        final int[] step = {0}; // Array für veränderbare Variable
 
         animationTimer = new Timer(delay, null);
         animationTimer.addActionListener(new ActionListener() {
-            @Override
             public void actionPerformed(ActionEvent e) {
                 float scale = 1.0f + 0.1f * (step[0] < steps / 2 ? step[0] : steps - step[0]);
                 setFont(getScaledFont(scale));
@@ -53,7 +52,7 @@ class Panel extends JLabel {
         return getFont().deriveFont(getFont().getSize2D() * scale);
     }
     
-    public int getValue() {
+    public int getValue() {//ordnet ein ob Binär oder Dezimal
         String text = getText().strip();
         if (text.isEmpty()) return -1;
 
