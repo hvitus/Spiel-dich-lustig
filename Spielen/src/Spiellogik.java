@@ -20,8 +20,9 @@ public class Spiellogik{
     Color dunkelgrün = new Color(45, 115, 20); 
 
 
-    public static void initialisiereSpielfeld() {
-        for (int i = 0; i < SIZE; i++) {
+   
+    public static void initialisiereSpielfeld() { //bestimmt die Logik innerhalb des Spielfeldes
+    	for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
                 if ((i == 0 || i == SIZE - 1) && (j == 0 || j == SIZE - 1)) {
                     board[i][j] = null;
@@ -62,7 +63,7 @@ public class Spiellogik{
         }
     }
 
-    public static void zeichneSpielfeld() {
+    public static void zeichneSpielfeld() { // erstellt das Spielfeld, mitsamt aller Felder und dem Highscore
         frame.getContentPane().removeAll();
         frame.getContentPane().setLayout(new BorderLayout());
 
@@ -90,7 +91,7 @@ public class Spiellogik{
         frame.setVisible(true);
     }
 
-    public static void verschiebeZahl(int i, int j) {
+    public static void verschiebeZahl(int i, int j) { // Logik zum verschieben einer Zahl in das Spielfeld
         if (board[i][j] == null) return;
 
         String wert = board[i][j].getText().strip();
@@ -110,9 +111,9 @@ public class Spiellogik{
         if (kannSchieben(zi, zj, ri, rj)) {
             schiebeKette(zi, zj, ri, rj);
             board[zi][zj].setText(wert);
-            setzeTextfarbe(board[zi][zj]); // <- hinzugefügt
+            setzeTextfarbe(board[zi][zj]); 
             board[i][j].setText(erstelleZahlAlsText(generiereRandWert()));
-            setzeTextfarbe(board[i][j]); // <- hinzugefügt
+            setzeTextfarbe(board[i][j]); 
             board[i][j].setBackground(Color.LIGHT_GRAY);
             findeUndMergeGruppen();
         } else {
@@ -120,13 +121,13 @@ public class Spiellogik{
         }
     }
 
-    public static boolean kannSchieben(int i, int j, int ri, int rj) {
+    public static boolean kannSchieben(int i, int j, int ri, int rj) { // Prüft ob die Zahl verschiebbar ist
         if (i <= 0 || i >= SIZE - 1 || j <= 0 || j >= SIZE - 1) return false;
         if (board[i][j].getText().strip().isEmpty()) return true;
         return kannSchieben(i + ri, j + rj, ri, rj);
     }
 
-    public static void schiebeKette(int i, int j, int ri, int rj) {
+    public static void schiebeKette(int i, int j, int ri, int rj) { //Logik zum verschieben einer Zahl vor einer Zahl
         if (board[i][j].getText().strip().isEmpty()) return;
 
         int ni = i + ri;
@@ -134,11 +135,11 @@ public class Spiellogik{
 
         schiebeKette(ni, nj, ri, rj);
         board[ni][nj].setText(board[i][j].getText());
-        setzeTextfarbe(board[ni][nj]); // <- hinzugefügt
+        setzeTextfarbe(board[ni][nj]); 
         board[i][j].setText("");
     }
 
-    public static void findeUndMergeGruppen() {
+    public static void findeUndMergeGruppen() { //schaut nach gleichen Zahlen im Feld und fügt sie zusammen, falls 3 orthogonal verbunden sind. 
         final boolean[] etwasGemerged = { false };
 
         boolean gefundenUndTimerGestartet;
@@ -197,11 +198,11 @@ public class Spiellogik{
         } while (gefundenUndTimerGestartet && etwasGemerged[0]);
     }
 
-    public static String erstelleZahlAlsText(int wert) {
+    public static String erstelleZahlAlsText(int wert) { //wandelt 50% der Zahlen in Binär um und gibt ihnen die variable "wert" als value
         return Math.random() < 0.5 ? Integer.toBinaryString(wert) : String.valueOf(wert);
     }
 
-    public static int generiereRandWert() {
+    public static int generiereRandWert() { //generiert die neuen Randzahlen, in Abhängigkeit von der höchsten Zahl (Highscore) im Spielfeld
     	if (highscore >= 4) {
             int min = Math.max(1, highscore - 3);
             int max = highscore - 1;
@@ -211,20 +212,20 @@ public class Spiellogik{
         }
     }
 
-    // Neue Methode zur Farbsetzung je nach Format
+    // Farbsetzung je nach Zahlensystem
     public static void setzeTextfarbe(Panel p) {
         String text = p.getText().strip();
         if (text.equals("1")) {
             p.setForeground(Color.BLUE); // <- explizit für intrinsischen Wert 1
         } else if (text.matches("[01]+")) { 
-        	p.setForeground(new Color(74, 171, 39));} else {
+        	p.setForeground(new Color(74, 171, 39));} else {//Binär
             p.setForeground(Color.BLUE); // Dezimal
         }
     }
 
-    public static List<Point> findeGruppe(int i, int j, String wert, boolean[][] besucht) {
+    public static List<Point> findeGruppe(int i, int j, String wert, boolean[][] besucht) {//sucht nach Nachbarfeldern mit dem selben Wert, und gibt diese in einer Liste mit Pointobjekten zurück
         List<Point> gruppe = new ArrayList<>();
-        int zielWert = board[i][j].getValue(); // Wandelt Binär oder Dezimal nach int
+        int zielWert = board[i][j].getValue(); // Wandelt Binär oder Dezimal nach int um
 
         Queue<Point> queue = new LinkedList<>();
         queue.add(new Point(i, j));
@@ -254,7 +255,7 @@ public class Spiellogik{
 
 
 
-    public static void prüfeObSpielVorbei() {
+    public static void prüfeObSpielVorbei() {//schaut ob alle Randfelder auf Rot sind und beendet dann das Spiel
         boolean allesRot = true;
 
         for (int i = 0; i < SIZE; i++) {
@@ -271,7 +272,7 @@ public class Spiellogik{
         if (allesRot) zeigeGameOverOverlay();
     }
 
-    public static void setzeRandfarbenZurück() {
+    public static void setzeRandfarbenZurück() {//prüft ob die Reiehen wieder frei sind, und enfernt das Rot von den Randfeldern
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
                 if (board[i][j] != null && board[i][j].typ.equals("border")) {
@@ -294,7 +295,7 @@ public class Spiellogik{
         }
     }
 
-    public static void zeigeGameOverOverlay() {
+    public static void zeigeGameOverOverlay() {//beschreibt den Gameover Bildschirm
         String name = JOptionPane.showInputDialog(frame, "Spiel vorbei! Gib deinen Namen ein:");
         if (name != null && !name.strip().isEmpty()) {
             highscoreListe.add(new HighscoreEintrag(name.strip(), highscore));
@@ -348,7 +349,7 @@ public class Spiellogik{
         spieleGameOverMusik("gameover.wav");
     }
 
-    static class HighscoreEintrag {
+    static class HighscoreEintrag {//Speichert für jeden SPieler seinen Namen und deren Highscore
         String name;
         int punkte;
         HighscoreEintrag(String name, int punkte) {
@@ -356,7 +357,7 @@ public class Spiellogik{
             this.punkte = punkte;
         }
     }
-    public static void spieleHighscorePopAnimation() {
+    public static void spieleHighscorePopAnimation() {// spielt einen Animation wenn der Highscore geknackt wird
         Timer timer = new Timer(50, null);
         final int[] groesse = {20};
         final boolean[] wachsend = {true};
@@ -380,7 +381,7 @@ public class Spiellogik{
         timer.start();
     }
 
-    public static void speichereHighscores() {
+    public static void speichereHighscores() { //speichert die highscores in einer datei
         try (PrintWriter writer = new PrintWriter(new FileWriter(DATEINAME))) {
             for (HighscoreEintrag e : highscoreListe) {
                 writer.println(e.name + ";" + e.punkte);
@@ -390,7 +391,7 @@ public class Spiellogik{
         }
     }
 
-    public static void ladeHighscores() {
+    public static void ladeHighscores() {//lädt die Highscore aus einer Datei
         File file = new File(DATEINAME);
         if (!file.exists()) return;
 
@@ -408,10 +409,11 @@ public class Spiellogik{
             e.printStackTrace();
         }
     }
+    //Musik
     public static Clip hintergrundClip;
     private static Clip gameOverClip;
 
-    public static void spieleHintergrundmusik(String dateipfad) {
+    public static void spieleHintergrundmusik(String dateipfad) {//spielt Hintergrundmusik
         stopMusik(); // Vorherige Musik stoppen
         try {
             AudioInputStream audioInput = AudioSystem.getAudioInputStream(new File(dateipfad));
@@ -423,7 +425,7 @@ public class Spiellogik{
         }
     }
 
-    public static void spieleGameOverMusik(String dateipfad) {
+    public static void spieleGameOverMusik(String dateipfad) {// Spielt Gameovermusik
     try {
         if (hintergrundClip != null && hintergrundClip.isRunning()) {
             hintergrundClip.stop();

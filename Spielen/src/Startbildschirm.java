@@ -18,7 +18,7 @@ import javax.swing.Timer;
 
 public class Startbildschirm  extends Spiellogik{
   
-	public static void Startbildschirm() {
+	public static void Startbildschirm() {//beschreibt den Starbildschirm
         frame.getContentPane().removeAll();
         frame.setLayout(new BorderLayout());
 
@@ -26,8 +26,8 @@ public class Startbildschirm  extends Spiellogik{
         startPanel.setLayout(new BoxLayout(startPanel, BoxLayout.Y_AXIS));
         startPanel.setBackground(Color.BLACK);
 
-        JLabel titelLabel = new JLabel("Merge dich zesty", SwingConstants.CENTER);
-        titelLabel.setFont(new Font("Arial", Font.BOLD, 48));
+        JLabel titelLabel = new JLabel("Binary Fusion₂", SwingConstants.CENTER);
+        titelLabel.setFont(new Font("Arial", Font.BOLD, 41));
         titelLabel.setForeground(Color.BLUE);
         titelLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         startPanel.add(Box.createVerticalStrut(80));
@@ -35,10 +35,10 @@ public class Startbildschirm  extends Spiellogik{
 
         // Animation für die Schriftgröße
         Timer timer = new Timer(50, new ActionListener() {
-            private int fontSize = 40;
+            private int fontSize = 45;
             private boolean growing = true;
 
-            @Override
+            
             public void actionPerformed(ActionEvent e) {
                 if (growing) {
                     fontSize += 2;
@@ -56,7 +56,7 @@ public class Startbildschirm  extends Spiellogik{
         });
         timer.start();
 
-        JButton startButton = new JButton("Start");
+        JButton startButton = new JButton("Start");//Start Knopf
         startButton.setFont(new Font("Arial", Font.BOLD, 32));
         startButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         startButton.setFocusPainted(false);
@@ -65,21 +65,21 @@ public class Startbildschirm  extends Spiellogik{
 
         // Button Hover Effekt: Vergrößern beim Hover
         startButton.addMouseListener(new MouseAdapter() {
-            @Override
+            
             public void mouseEntered(MouseEvent e) {
                 startButton.setFont(new Font("Arial", Font.BOLD, 36));  // Vergrößern
             }
 
-            @Override
+            
             public void mouseExited(MouseEvent e) {
                 startButton.setFont(new Font("Arial", Font.BOLD, 32));  // Zurücksetzen
             }
         });
 
-        startButton.addActionListener(e -> {
+        startButton.addActionListener(e -> {// startet Spiel wenn man auf Startknopf drückt
             initialisiereSpielfeld();
             zeichneSpielfeld();
-            spieleHintergrundmusik("background.wav");
+            spieleHintergrundmusik("background.wav");// spielt Hintergrundmusik ab
         });
 
         startPanel.add(Box.createVerticalStrut(50));
