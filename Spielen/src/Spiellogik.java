@@ -11,7 +11,7 @@ import javax.sound.sampled.*;
 public class Spiellogik{
     static final int SIZE = 7;//defienert Größe 7 als SIZE
     static Panel[][] board = new Panel[SIZE][SIZE];
-    static JFrame frame = new JFrame("Spielfeld mit Rahmen");
+    static JFrame frame = new JFrame("Binary Merge");
     static int highscore = 1;
     static JLabel highscoreLabel = new JLabel("Highscore: 1", SwingConstants.CENTER);
     private static Timer delayTimer;
